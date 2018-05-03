@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH -N 1 -n 24
+#SBATCH -t 06:00:00
+#SBATCH -A <account>
+#SBATCH --no-requeue
+#SBATCH -J jupyter
+#SBATCH -o /dev/null
+
+cd $HOME
+PORT=$((10000+UID))
+
+export XDG_RUNTIME_DIR=$HOME/.jupyter/run
+rm -rf $XDG_RUNTIME_DIR
+mkdir -p $XDG_RUNTIME_DIR
+mkdir -p $HOME/notebooks
+
+module load python-intel/2.7.14
+jupyter-notebook --ip=0.0.0.0 --port=$PORT --no-browser --notebook-dir=$HOME/notebooks --NotebookApp.token='<token>'
