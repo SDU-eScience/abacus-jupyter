@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Variables
+ROOT=$(dirname $0)
+VERSION="$1"
+ACCOUNT="$2"
+DURATION="$3"
+TOKEN="$HOME/.jupyter/token"
+
+# Submit Jupyter job
+mkdir -p $HOME/.jupyter
+
+if [ ! -f $TOKEN ]; then
+	head -c 1048576 /dev/urandom | md5sum | awk '{ print $1 }' > $TOKEN
+fi
+
+if [ "$ACCOUNT" == "default" ]; then
+	ACCOUNT=""
+fi
+
+if [ -n "$ACCOUNT" ]; then
+	VALID=$(sshare -U $USER -Ph | cut -d'|' -f1 | egrep "^${ACCOUNT}\$")
+	if [ -z "$VALID" ]; then
+		echo "invalid account"
+		exit 0
+	fi
+fi
+
+TMP=$(mktemp)
+cp $ROOT/jpt_submit $TMP
+
+if [ -z "$ACCOUNT" ]; then
+	sed -i "/<account>/d" $TMP
+else
+	sed -i "s/<account>/$ACCOUNT/" $TMP
+fi
+
+if [ "$VERSION" == "2" ]; then
+	sed -i "s/<version>/2.7.14/" $TMP
+else
+	sed -i "s/<version>/3.6.3/" $TMP
+fi
+
+TOKEN=$(cat $TOKEN)
+sed -i "s/<token>/$TOKEN/" $TMP
+
+JOBID=$(sbatch $TMP | awk '{ print $4 }')
+rm -f $TMP
+echo "jobid $JOBID"

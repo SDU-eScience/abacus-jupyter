@@ -1,20 +1,31 @@
 #!/usr/bin/env python
 
-# Write instruction if TK is not installed!!!
-
 # Import needed modules
+import sys
+import webbrowser
+from subprocess import Popen, PIPE
+
 try:
 	import Tkinter as tk
 except ImportError:
+	pass
+
+try:
 	import tkinter as tk
+except ImportError:
+	pass
+
+try:
+	tk
+except NameError:
+	pass
+	print("Please install the python TK package to use this program")
+	sys.exit()
 
 try:
 	import tkFileDialog as filedialog
 except ImportError:
 	from tkinter import filedialog
-
-from subprocess import Popen, PIPE
-import webbrowser
 
 # Define JupyterTool class
 class JupyterTool:
@@ -123,21 +134,18 @@ class JupyterTool:
 		self.button_open.configure(state = tk.DISABLED)
 
 	def start_jupyter(self):
-		start = "start3"
+		version = "3"
 		account = self.entry_account.get()
 		if "2.7" in self.string_version.get():
-			start = "start2"
-		if account == "default":
-			account = ""
-		cmd = "/home/hansen/source/jupyter/jpt " + start + " " + account
-		cmd = cmd.strip()
+			version = "2"
+		cmd = "/home/hansen/source/jupyter/jpt_start " + version + " " + account
 		out, exitcode = self.ssh_command(cmd)
-		if "available" in out:
+		if "invalid" in out:
 			self.add_log("Cannot start Jupyter, invalid account: " + account)
 			return 0
 		else:
 			out = out.split(" ")
-			self.add_log("Started new Jupyter instance with jobid " + out[5])
+			self.add_log("Started new Jupyter instance with jobid " + out[1])
 			return 1
 
 	def poll_jupyter(self):
@@ -162,10 +170,9 @@ class JupyterTool:
 
 	def open_jupyter(self):
 		if not self.token:
-			cmd = "/home/hansen/source/jupyter/jpt token"
+			cmd = "cat ~/.jupyter/token"
 			out, exitcode = self.ssh_command(cmd)
-			out = out.split()
-			self.token = out[3]
+			self.token = out
 		url = "http://localhost:8888/?token=" + self.token
 		webbrowser.open_new_tab(url)
 
