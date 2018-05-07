@@ -43,6 +43,7 @@ fi
 
 TOKEN=$(cat $TOKEN)
 sed -i "s/<token>/$TOKEN/" $TMP
+sed -i "s/<time>/$DURATION/" $TMP
 
 JOBID=$(sbatch $TMP | awk '{ print $4 }')
 rm -f $TMP

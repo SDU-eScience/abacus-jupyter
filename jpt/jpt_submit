@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1 -n 24
-#SBATCH -t 06:00:00
+#SBATCH -t <time>:00
 #SBATCH -A <account>
 #SBATCH --no-requeue
 #SBATCH -J jupyter

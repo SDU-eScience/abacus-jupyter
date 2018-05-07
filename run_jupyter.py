@@ -47,6 +47,26 @@ class JupyterTool:
 		self.text_info.see(tk.END)
 		self.root.update()
 
+	def validate_time(self):
+		tm = self.entry_time.get()
+		tm = tm.split(":")
+		if not len(tm) == 2:
+			self.add_log("Invalid format for time limit")
+			return 0
+		if not tm[0].isdigit():
+			self.add_log("Invalid format for time limit")
+			return 0
+		if not tm[1].isdigit():
+			self.add_log("Invalid format for time limit")
+			return 0
+		hh = int(tm[0])
+		mm = int(tm[1])
+		tot = 60*hh + mm
+		if tot > 24*60:
+			self.add_log("Time limit exceeds the maximal value of 24 hours")
+			return 0
+		return 1
+
 	def ssh_command(self, cmd):
 		address = self.username + "@" + self.hostname
 		keyfile = self.entry_sshkey.get().strip()
@@ -138,7 +158,10 @@ class JupyterTool:
 		account = self.entry_account.get()
 		if "2.7" in self.string_version.get():
 			version = "2"
-		cmd = "/home/hansen/source/jupyter/jpt_start " + version + " " + account
+		if not self.validate_time():
+			return 0
+		tmlimit = self.entry_time.get()
+		cmd = "/home/hansen/source/jupyter/jpt_start " + version + " " + account + " " + tmlimit
 		out, exitcode = self.ssh_command(cmd)
 		if "invalid" in out:
 			self.add_log("Cannot start Jupyter, invalid account: " + account)
@@ -190,9 +213,9 @@ class JupyterTool:
 
 	def __init__(self, root):
 		self.root = root
-		self.root.title("Jupyter on ABACUS")
+		self.root.title("Jupyter on ABACUS 2.0")
 		self.root.protocol("WM_DELETE_WINDOW", self.close_window)
-		self.frame = tk.Frame(self.root, width = 500, height = 625)
+		self.frame = tk.Frame(self.root, width = 500, height = 685)
 		self.frame.pack()
 
 		self.label_settings = tk.Label(self.frame, text = "Settings", font = (None, 24))
@@ -223,16 +246,22 @@ class JupyterTool:
 		self.entry_account.place(x = 250, y = 272, anchor = tk.CENTER, width = 250)
 		self.entry_account.insert(0, "default")
 
+		self.label_time = tk.Label(self.frame, text = "Time limit (hh:mm)")
+		self.label_time.place(x = 250, y = 310, anchor = tk.CENTER)
+		self.entry_time = tk.Entry(self.frame)
+		self.entry_time.place(x = 250, y = 332, anchor = tk.CENTER, width = 250)
+		self.entry_time.insert(0, "06:00")
+
 		self.button_connect = tk.Button(self.frame, text = "Connect", command = self.connect)
-		self.button_connect.place(x = 250, y = 310, anchor = tk.CENTER)
+		self.button_connect.place(x = 250, y = 370, anchor = tk.CENTER)
 
 		self.label_info = tk.Label(self.frame, text = "Information", font = (None, 24))
-		self.label_info.place(x = 250, y = 360, anchor = tk.CENTER)
+		self.label_info.place(x = 250, y = 420, anchor = tk.CENTER)
 		self.text_info = tk.Text(self.frame, height = 10, width = 50, relief = tk.RIDGE, bd = 2, state = tk.DISABLED)
-		self.text_info.place(x = 250, y = 460, anchor = tk.CENTER)
+		self.text_info.place(x = 250, y = 520, anchor = tk.CENTER)
 
 		self.button_open = tk.Button(self.frame, text = "Open Jupyter in browser", command = self.open_jupyter, state = tk.DISABLED)
-		self.button_open.place(x = 250, y = 580, anchor = tk.CENTER)
+		self.button_open.place(x = 250, y = 640, anchor = tk.CENTER)
 
 # Create and launch the application
 root = tk.Tk()
