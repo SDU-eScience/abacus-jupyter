@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Import needed modules
+import os
 import sys
 import webbrowser
 from subprocess import Popen, PIPE
@@ -27,6 +28,11 @@ try:
 except ImportError:
 	from tkinter import filedialog
 
+try:
+	from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+	from configparser import ConfigParser
+
 # Define JupyterTool class
 class JupyterTool:
 	uid = None
@@ -39,6 +45,43 @@ class JupyterTool:
 	jpt_jobid = None
 	jpt_status = None
 	jpt_node = None
+
+	def save_settings(self):
+		config = ConfigParser()
+		config.add_section("main")
+		value = self.entry_username.get()
+		config.set("main", "username", value)
+		value = self.entry_sshkey.get()
+		config.set("main", "sshkey", value)
+		value = self.entry_account.get()
+		config.set("main", "account", value)
+		value = self.entry_time.get()
+		config.set("main", "timelimit", value)
+		value = self.string_version.get()
+		config.set("main", "version", value)
+		with open(os.path.expanduser("~/.jupytertool"), "w") as f:
+			config.write(f)
+
+	def get_value(self, config, key, default):
+		try:
+			value = config.get("main", key)
+		except:
+			value = default
+		return value
+
+	def load_settings(self):
+		config = ConfigParser()
+		config.read(os.path.expanduser("~/.jupytertool"))
+		value = self.get_value(config, "username", "")
+		self.entry_username.insert(0, value)
+		value = self.get_value(config, "sshkey", "")
+		self.entry_sshkey.insert(0, value)
+		value = self.get_value(config, "account", "default")
+		self.entry_account.insert(0, value)
+		value = self.get_value(config, "timelimit", "06:00")
+		self.entry_time.insert(0, value)
+		value = self.get_value(config, "version", "Python 3.6")
+		self.string_version.set(value)
 
 	def add_log(self, text):
 		self.text_info.configure(state = tk.NORMAL)
@@ -203,6 +246,7 @@ class JupyterTool:
 		if self.status:
 			self.close_tunnel()
 			self.stop_jupyter()
+		self.save_settings()
 		self.root.destroy()
 
 	def open_sshkey(self):
@@ -237,18 +281,15 @@ class JupyterTool:
 		self.label_account.place(x = 40, y = 120, anchor = tk.W)
 		self.entry_account = tk.Entry(self.frame)
 		self.entry_account.place(x = 40, y = 142, anchor = tk.W, width = 200)
-		self.entry_account.insert(0, "default")
 
 		self.label_time = tk.Label(self.frame, text = "Time limit (hh:mm)")
 		self.label_time.place(x = 250, y = 120, anchor = tk.W)
 		self.entry_time = tk.Entry(self.frame)
 		self.entry_time.place(x = 250, y = 142, anchor = tk.W, width = 200)
-		self.entry_time.insert(0, "06:00")
 
 		self.label_version = tk.Label(self.frame, text = "Version")
 		self.label_version.place(x = 460, y = 120, anchor = tk.W)
 		self.string_version = tk.StringVar(self.frame)
-		self.string_version.set("Python 3.6")
 		self.select_version = tk.OptionMenu(self.frame, self.string_version, "Python 3.6", "Python 2.7")
 		self.select_version.place(x = 460, y = 142, anchor = tk.W, width = 200)
 
@@ -262,6 +303,8 @@ class JupyterTool:
 
 		self.button_open = tk.Button(self.frame, text = "Open Jupyter in browser", command = self.open_jupyter, state = tk.DISABLED)
 		self.button_open.place(x = 40, y = 440, anchor = tk.W)
+
+		self.load_settings();
 
 # Create and launch the application
 root = tk.Tk()
