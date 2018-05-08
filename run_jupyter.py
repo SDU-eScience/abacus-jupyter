@@ -35,11 +35,12 @@ except ImportError:
 
 # Define JupyterTool class
 class JupyterTool:
+	hostname = "fe.deic.sdu.dk"
+	jpt_start = "/home/hansen/source/jupyter/jpt_start"
 	uid = None
 	username = None
 	status = None
 	tunnel = None
-	hostname = "fe.deic.sdu.dk"
 	port = None
 	token = None
 	jpt_jobid = None
@@ -152,8 +153,14 @@ class JupyterTool:
 			self.tunnel.terminate()
 		self.status = None
 
+	def stop_waiting(self):
+		self.stop_jupyter()
+		self.button_connect.configure(text = "Connect", command = self.connect)
+		self.root.update()
+
 	def wait_tunnel(self):
-		self.poll_jupyter()
+		if not self.poll_jupyter():
+			return
 		if self.jpt_status == "R":
 			self.add_log("Jupyter is currently running")
 			self.open_tunnel()
@@ -161,6 +168,7 @@ class JupyterTool:
 				self.add_log("Established SSH tunnel using port " + self.port)
 				self.button_connect.configure(text = "Disconnect", command = self.disconnect)
 				self.button_open.configure(state = tk.NORMAL)
+				self.root.update()
 			else:
 				self.add_log("Failed to establish SSH tunnel using port " + self.port)
 			return
@@ -180,10 +188,14 @@ class JupyterTool:
 			self.add_log("Successfully connected as: " + self.username + " (" + str(self.uid) + ")")
 		if self.poll_jupyter():
 			self.add_log("Jupyter instance found with jobid " + self.jpt_jobid)
+			self.button_connect.configure(text = "Stop", command = self.stop_waiting)
+			self.root.update()
 			self.wait_tunnel()
 		else:
 			self.add_log("Jupyter instance was not found")
 			if self.start_jupyter():
+				self.button_connect.configure(text = "Stop", command = self.stop_waiting)
+				self.root.update()
 				self.wait_tunnel()
 
 	def disconnect(self):
@@ -204,7 +216,7 @@ class JupyterTool:
 		if not self.validate_time():
 			return 0
 		tmlimit = self.entry_time.get()
-		cmd = "/home/hansen/source/jupyter/jpt_start " + version + " " + account + " " + tmlimit
+		cmd = self.jpt_start + " " + version + " " + account + " " + tmlimit
 		out, exitcode = self.ssh_command(cmd)
 		if "invalid" in out:
 			self.add_log("Cannot start Jupyter, invalid account: " + account)
@@ -224,6 +236,9 @@ class JupyterTool:
 			self.jpt_node = out[2]
 			return 1
 		else:
+			self.jpt_jobid = None
+			self.jpt_status = None
+			self.jpt_node = None
 			return 0
 
 	def stop_jupyter(self):
@@ -231,6 +246,9 @@ class JupyterTool:
 			self.add_log("Stopping Jupyter with jobid " + self.jpt_jobid)
 			cmd = "scancel -u " + self.username + " -n jupyter"
 			self.ssh_command(cmd)
+			self.jpt_jobid = None
+			self.jpt_status = None
+			self.jpt_node = None
 		else:
 			self.add_log("No instance of Jupyter is running")
 
@@ -245,6 +263,8 @@ class JupyterTool:
 	def close_window(self):
 		if self.status:
 			self.close_tunnel()
+			self.stop_jupyter()
+		elif self.jpt_jobid:
 			self.stop_jupyter()
 		self.save_settings()
 		self.root.destroy()
@@ -293,7 +313,7 @@ class JupyterTool:
 		self.select_version = tk.OptionMenu(self.frame, self.string_version, "Python 3.6", "Python 2.7")
 		self.select_version.place(x = 460, y = 142, anchor = tk.W, width = 200)
 
-		self.button_connect = tk.Button(self.frame, text = "Connect", command = self.connect)
+		self.button_connect = tk.Button(self.frame, text = "Connect", width = 10, command = self.connect)
 		self.button_connect.place(x = 40, y = 180, anchor = tk.W)
 
 		self.label_info = tk.Label(self.frame, text = "Information", font = (None, 24))
