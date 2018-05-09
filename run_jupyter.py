@@ -36,7 +36,7 @@ except ImportError:
 # Define JupyterTool class
 class JupyterTool:
 	hostname = "fe.deic.sdu.dk"
-	jpt_start = "/home/hansen/source/jupyter/jpt_start"
+	jpt_start = "/opt/sys/jpt/jpt_start"
 	uid = None
 	username = None
 	status = None
