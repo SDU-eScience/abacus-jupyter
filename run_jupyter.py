@@ -259,6 +259,7 @@ class JupyterTool:
 			self.token = out
 		url = "http://localhost:8888/?token=" + self.token
 		webbrowser.open_new_tab(url)
+		self.add_log("URL address: " + url)
 
 	def close_window(self):
 		if self.status:
@@ -318,7 +319,9 @@ class JupyterTool:
 
 		self.label_info = tk.Label(self.frame, text = "Information", font = (None, 24))
 		self.label_info.place(x = 40, y = 235, anchor = tk.W)
-		self.text_info = tk.Text(self.frame, height = 10, width = 87, relief = tk.RIDGE, bd = 2, state = tk.DISABLED)
+		self.text_info = tk.Text(self.frame, height = 10, width = 87, relief = tk.RIDGE, bd = 2)
+		self.text_info.configure(highlightthickness = 0, state = tk.DISABLED)
+		self.text_info.bind("<1>", lambda event: self.text_info.focus_set())
 		self.text_info.place(x = 40, y = 335, anchor = tk.W)
 
 		self.button_open = tk.Button(self.frame, text = "Open Jupyter in browser", command = self.open_jupyter, state = tk.DISABLED)
