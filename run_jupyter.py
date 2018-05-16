@@ -132,12 +132,12 @@ class JupyterTool:
 	def open_tunnel(self):
 		self.port = str(10000 + self.uid)
 		address = self.username + "@" + self.hostname
+		forward = "8888:" + self.jpt_node + ":" + self.port
 		keyfile = self.entry_sshkey.get().strip()
-		cmd = "ssh -q -N -L " + self.port + ":localhost:" + self.port + " " + self.jpt_node
 		if keyfile == "":
-			self.tunnel = Popen(["ssh", "-q", "-L", "8888:localhost:" + self.port, address, cmd])
+			self.tunnel = Popen(["ssh", "-q", "-N", "-L", forward, address])
 		else:
-			self.tunnel = Popen(["ssh", "-q", "-i", keyfile, "-L", "8888:localhost:" + self.port, address, cmd])
+			self.tunnel = Popen(["ssh", "-q", "-i", keyfile, "-N", "-L", forward, address])
 		self.status = 1
 
 	def poll_tunnel(self):
@@ -258,8 +258,8 @@ class JupyterTool:
 			out, exitcode = self.ssh_command(cmd)
 			self.token = out
 		url = "http://localhost:8888/?token=" + self.token
-		webbrowser.open_new_tab(url)
 		self.add_log("URL address: " + url)
+		webbrowser.open_new_tab(url)
 
 	def close_window(self):
 		if self.status:
