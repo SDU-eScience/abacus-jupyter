@@ -8,6 +8,7 @@
 
 cd $HOME
 PORT=$((10000+UID))
+MODULES=$HOME/.jupyter/modules
 
 export XDG_RUNTIME_DIR=$HOME/.jupyter/run
 rm -rf $XDG_RUNTIME_DIR
@@ -15,4 +16,9 @@ mkdir -p $XDG_RUNTIME_DIR
 mkdir -p $HOME/notebooks
 
 module load python-intel/<version>
+
+if [ -f $MODULES ]; then
+	source $MODULES
+fi
+
 jupyter-notebook --ip=0.0.0.0 --port=$PORT --no-browser --notebook-dir=$HOME/notebooks --NotebookApp.token='<token>'
