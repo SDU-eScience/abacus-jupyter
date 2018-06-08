@@ -4,6 +4,7 @@
 import os
 import sys
 import webbrowser
+import socket
 from subprocess import Popen, PIPE
 
 try:
@@ -129,6 +130,25 @@ class JupyterTool:
 		else:
 			return int(out)
 
+	def poll_webserver(self):
+		handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		result = handle.connect_ex(('localhost', 8888))
+		if result == 0:
+			return 1
+		else:
+			return 0
+
+	def wait_webserver(self):
+		if not self.poll_tunnel():
+			return
+		if self.poll_webserver():
+			self.add_log("Jupyter webserver is up and running")
+			self.button_open.configure(state = tk.NORMAL)
+			self.root.update()
+		else:
+			self.add_log("Jupyter webserver is not responding, please wait")
+			self.root.after(5000, self.wait_webserver)
+
 	def open_tunnel(self):
 		self.port = str(10000 + self.uid)
 		address = self.username + "@" + self.hostname
@@ -167,8 +187,7 @@ class JupyterTool:
 			if self.poll_tunnel():
 				self.add_log("Established SSH tunnel using port " + self.port)
 				self.button_connect.configure(text = "Disconnect", command = self.disconnect)
-				self.button_open.configure(state = tk.NORMAL)
-				self.root.update()
+				self.wait_webserver()
 			else:
 				self.add_log("Failed to establish SSH tunnel using port " + self.port)
 			return
@@ -327,7 +346,7 @@ class JupyterTool:
 		self.button_open = tk.Button(self.frame, text = "Open Jupyter in browser", command = self.open_jupyter, state = tk.DISABLED)
 		self.button_open.place(x = 40, y = 440, anchor = tk.W)
 
-		self.load_settings();
+		self.load_settings()
 
 # Create and launch the application
 root = tk.Tk()
