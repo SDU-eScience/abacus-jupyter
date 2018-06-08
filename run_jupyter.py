@@ -298,6 +298,7 @@ class JupyterTool:
 	def __init__(self, root):
 		self.root = root
 		self.root.title("Jupyter on ABACUS 2.0")
+		self.root.protocol("WM_DELETE_WINDOW", self.close_window)
 		self.frame = tk.Frame(self.root)
 		self.frame.pack(padx = 40, pady = 20)
 
