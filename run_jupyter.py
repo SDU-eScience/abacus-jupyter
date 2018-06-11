@@ -4,7 +4,6 @@
 import os
 import sys
 import webbrowser
-import socket
 from subprocess import Popen, PIPE
 
 try:
@@ -33,6 +32,11 @@ try:
 	from ConfigParser import SafeConfigParser as ConfigParser
 except ImportError:
 	from configparser import ConfigParser
+
+try:
+	import urllib.request as url
+except ImportError:
+	import urllib as url
 
 # Define JupyterTool class
 class JupyterTool:
@@ -92,6 +96,14 @@ class JupyterTool:
 		self.text_info.see(tk.END)
 		self.root.update()
 
+	def set_connect(self):
+		self.button_connect.configure(text = "Connect", command = self.connect)
+		self.root.update()
+
+	def set_disconnect(self):
+		self.button_connect.configure(text = "Disconnect", command = self.disconnect)
+		self.root.update()
+
 	def validate_time(self):
 		tm = self.entry_time.get()
 		tm = tm.split(":")
@@ -115,7 +127,7 @@ class JupyterTool:
 	def ssh_command(self, cmd):
 		address = self.username + "@" + self.hostname
 		keyfile = self.entry_sshkey.get().strip()
-		if keyfile == "":
+		if not keyfile:
 			proc = Popen(["ssh", "-q", address, cmd], stdout=PIPE)
 		else:
 			proc = Popen(["ssh", "-q", "-i", keyfile, address, cmd], stdout=PIPE)
@@ -131,9 +143,11 @@ class JupyterTool:
 			return int(out)
 
 	def poll_webserver(self):
-		handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		result = handle.connect_ex(('localhost', 8888))
-		if result == 0:
+		try:
+			result = url.urlopen("http://localhost:8888").getcode()
+		except:
+			return 0
+		if result == 200:
 			return 1
 		else:
 			return 0
@@ -154,7 +168,7 @@ class JupyterTool:
 		address = self.username + "@" + self.hostname
 		forward = "8888:" + self.jpt_node + ":" + self.port
 		keyfile = self.entry_sshkey.get().strip()
-		if keyfile == "":
+		if not keyfile:
 			self.tunnel = Popen(["ssh", "-q", "-N", "-L", forward, address])
 		else:
 			self.tunnel = Popen(["ssh", "-q", "-i", keyfile, "-N", "-L", forward, address])
@@ -171,25 +185,23 @@ class JupyterTool:
 	def close_tunnel(self):
 		if self.poll_tunnel():
 			self.tunnel.terminate()
+			self.add_log("Closed SSH tunnel")
 		self.status = None
-
-	def stop_waiting(self):
-		self.stop_jupyter()
-		self.button_connect.configure(text = "Connect", command = self.connect)
-		self.root.update()
 
 	def wait_tunnel(self):
 		if not self.poll_jupyter():
 			return
+		else:
+			self.set_disconnect()
 		if self.jpt_status == "R":
 			self.add_log("Jupyter is currently running")
 			self.open_tunnel()
 			if self.poll_tunnel():
 				self.add_log("Established SSH tunnel using port " + self.port)
-				self.button_connect.configure(text = "Disconnect", command = self.disconnect)
 				self.wait_webserver()
 			else:
 				self.add_log("Failed to establish SSH tunnel using port " + self.port)
+				self.set_connect()
 			return
 		elif self.jpt_status == "PD":
 			self.add_log("Jupyter is currently pending, please wait")
@@ -207,25 +219,17 @@ class JupyterTool:
 			self.add_log("Successfully connected as: " + self.username + " (" + str(self.uid) + ")")
 		if self.poll_jupyter():
 			self.add_log("Jupyter instance found with jobid " + self.jpt_jobid)
-			self.button_connect.configure(text = "Stop", command = self.stop_waiting)
-			self.root.update()
-			self.wait_tunnel()
 		else:
 			self.add_log("Jupyter instance was not found")
-			if self.start_jupyter():
-				self.button_connect.configure(text = "Stop", command = self.stop_waiting)
-				self.root.update()
-				self.wait_tunnel()
+			if not self.start_jupyter():
+				return
+		self.wait_tunnel()
 
 	def disconnect(self):
 		self.stop_jupyter()
-		if self.poll_tunnel():
-			self.close_tunnel()
-			self.add_log("Closed SSH tunnel")
-		else:
-			self.add_log("No active SSH tunnel found")
-		self.button_connect.configure(text = "Connect", command = self.connect)
+		self.close_tunnel()
 		self.button_open.configure(state = tk.DISABLED)
+		self.set_connect()
 
 	def start_jupyter(self):
 		version = "3"
@@ -265,11 +269,9 @@ class JupyterTool:
 			self.add_log("Stopping Jupyter with jobid " + self.jpt_jobid)
 			cmd = "scancel -u " + self.username + " -n jupyter"
 			self.ssh_command(cmd)
-			self.jpt_jobid = None
-			self.jpt_status = None
-			self.jpt_node = None
-		else:
-			self.add_log("No instance of Jupyter is running")
+		self.jpt_jobid = None
+		self.jpt_status = None
+		self.jpt_node = None
 
 	def open_jupyter(self):
 		if not self.token:
@@ -281,11 +283,10 @@ class JupyterTool:
 		webbrowser.open_new_tab(url)
 
 	def close_window(self):
+		if self.jpt_jobid:
+			self.stop_jupyter()
 		if self.status:
 			self.close_tunnel()
-			self.stop_jupyter()
-		elif self.jpt_jobid:
-			self.stop_jupyter()
 		self.save_settings()
 		self.root.destroy()
 
@@ -324,12 +325,12 @@ class JupyterTool:
 
 		self.label_account = tk.Label(self.bframe, text = "Account")
 		self.label_account.grid(row = 0, column = 0, sticky = tk.W)
-		self.entry_account = tk.Entry(self.bframe)
+		self.entry_account = tk.Entry(self.bframe, width = 20)
 		self.entry_account.grid(row = 1, column = 0, sticky = tk.W)
 
 		self.label_time = tk.Label(self.bframe, text = "Time limit (hh:mm)")
 		self.label_time.grid(row = 0, column = 1, padx = 5, sticky = tk.W)
-		self.entry_time = tk.Entry(self.bframe)
+		self.entry_time = tk.Entry(self.bframe, width = 20)
 		self.entry_time.grid(row = 1, column = 1, padx = 5, sticky = tk.W)
 
 		self.label_version = tk.Label(self.bframe, text = "Version")
