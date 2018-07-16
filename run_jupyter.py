@@ -233,13 +233,16 @@ class JupyterTool:
 
 	def start_jupyter(self):
 		version = "3"
+		jupyter = "nb"
 		account = self.entry_account.get()
 		if "2.7" in self.string_version.get():
 			version = "2"
+		if "Lab" in self.string_version.get():
+			jupyter = "lab"
 		if not self.validate_time():
 			return 0
 		tmlimit = self.entry_time.get()
-		cmd = self.jpt_start + " " + version + " " + account + " " + tmlimit
+		cmd = self.jpt_start + " " + version + " " + jupyter + " " + account + " " + tmlimit
 		out, exitcode = self.ssh_command(cmd)
 		if "invalid" in out:
 			self.add_log("Cannot start Jupyter, invalid account: " + account)
@@ -310,6 +313,8 @@ class JupyterTool:
 		self.aframe.grid(row = 1, column = 0, sticky = tk.W)
 		self.bframe = tk.Frame(self.frame)
 		self.bframe.grid(row = 2, column = 0, pady = 5, sticky = tk.W)
+		self.cframe = tk.Frame(self.frame)
+		self.cframe.grid(row = 3, column = 0, pady = 5, sticky = tk.W)
 
 		self.label_username = tk.Label(self.aframe, text = "Username")
 		self.label_username.grid(row = 0, column = 0, sticky = tk.W)
@@ -336,12 +341,12 @@ class JupyterTool:
 		self.label_version = tk.Label(self.bframe, text = "Version")
 		self.label_version.grid(row = 0, column = 2, sticky = tk.W)
 		self.string_version = tk.StringVar(self.bframe)
-		self.select_version = tk.OptionMenu(self.bframe, self.string_version, "Python 3.6", "Python 2.7")
+		self.select_version = tk.OptionMenu(self.bframe, self.string_version, "Python 3.6 (Jupyter Notebook)", "Python 3.6 (JupyterLab)", "Python 2.7 (Jupyter Notebook)", "Python 2.7 (JupyterLab)")
 		self.select_version.configure(width = 20)
 		self.select_version.grid(row = 1, column = 2, sticky = tk.W)
 
-		self.button_connect = tk.Button(self.frame, text = "Connect", width = 10, command = self.connect)
-		self.button_connect.grid(row = 3, column = 0, pady = 5, sticky = tk.W)
+		self.button_connect = tk.Button(self.cframe, text = "Connect", width = 10, command = self.connect)
+		self.button_connect.grid(row = 1, column = 0, pady = 5, sticky = tk.W)
 
 		self.label_info = tk.Label(self.frame, text = "Information", font = (None, 24))
 		self.label_info.grid(row = 4, column = 0, pady = (15,4), sticky = tk.W)

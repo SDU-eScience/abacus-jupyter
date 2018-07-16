@@ -3,8 +3,9 @@
 # Variables
 ROOT=$(dirname $0)
 VERSION="$1"
-ACCOUNT="$2"
-DURATION="$3"
+JUPYTER="$2"
+ACCOUNT="$3"
+DURATION="$4"
 TOKEN="$HOME/.jupyter/token"
 
 # Submit Jupyter job
@@ -33,6 +34,12 @@ if [ -z "$ACCOUNT" ]; then
 	sed -i "/<account>/d" $TMP
 else
 	sed -i "s/<account>/$ACCOUNT/" $TMP
+fi
+
+if [ "$JUPYTER" == "lab" ]; then
+	sed -i "s/<command>/jupyter-lab/" $TMP
+else
+	sed -i "s/<command>/jupyter-notebook/" $TMP
 fi
 
 if [ "$VERSION" == "2" ]; then

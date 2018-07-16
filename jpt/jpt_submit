@@ -15,10 +15,11 @@ rm -rf $XDG_RUNTIME_DIR
 mkdir -p $XDG_RUNTIME_DIR
 mkdir -p $HOME/notebooks
 
-module load python-intel/<version>
+module load python/<version>
+module load jupyterlab
 
 if [ -f $MODULES ]; then
 	source $MODULES
 fi
 
-jupyter-notebook --ip=0.0.0.0 --port=$PORT --no-browser --notebook-dir=$HOME/notebooks --NotebookApp.token='<token>'
+<command> --ip=0.0.0.0 --port=$PORT --no-browser --notebook-dir=$HOME/notebooks --NotebookApp.token='<token>'
