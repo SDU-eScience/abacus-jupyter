@@ -313,8 +313,6 @@ class JupyterTool:
 		self.aframe.grid(row = 1, column = 0, sticky = tk.W)
 		self.bframe = tk.Frame(self.frame)
 		self.bframe.grid(row = 2, column = 0, pady = 5, sticky = tk.W)
-		self.cframe = tk.Frame(self.frame)
-		self.cframe.grid(row = 3, column = 0, pady = 5, sticky = tk.W)
 
 		self.label_username = tk.Label(self.aframe, text = "Username")
 		self.label_username.grid(row = 0, column = 0, sticky = tk.W)
@@ -345,8 +343,8 @@ class JupyterTool:
 		self.select_version.configure(width = 20)
 		self.select_version.grid(row = 1, column = 2, sticky = tk.W)
 
-		self.button_connect = tk.Button(self.cframe, text = "Connect", width = 10, command = self.connect)
-		self.button_connect.grid(row = 1, column = 0, pady = 5, sticky = tk.W)
+		self.button_connect = tk.Button(self.frame, text = "Connect", width = 10, command = self.connect)
+		self.button_connect.grid(row = 3, column = 0, pady = 5, sticky = tk.W)
 
 		self.label_info = tk.Label(self.frame, text = "Information", font = (None, 24))
 		self.label_info.grid(row = 4, column = 0, pady = (15,4), sticky = tk.W)
