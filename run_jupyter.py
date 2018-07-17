@@ -38,8 +38,33 @@ try:
 except ImportError:
 	import urllib as url
 
-# Define JupyterTool class
-class JupyterTool:
+# Define UpdateWindow class
+class UpdateWindow:
+	def close_window(self):
+		self.root.destroy()
+		self.parent.destroy()
+
+	def __init__(self, parent):
+		self.root = tk.Toplevel(parent)
+		self.parent = parent
+
+		self.root.title("Update required")
+		self.root.geometry("+%d+%d" % (parent.winfo_rootx()+100, parent.winfo_rooty()+100))
+		self.root.grab_set()
+		self.root.transient(parent)
+		self.root.lift()
+
+		self.label_info = tk.Label(self.root, text = "A new version of the program is available.\nPlease visit escience.sdu.dk to download the newest version.")
+		self.label_info.pack(padx = 10, pady = 10)
+
+		self.button_close = tk.Button(self.root, text = "Close", width = 6, command = self.close_window)
+		self.button_close.pack(pady = (0,15))
+
+		self.root.protocol("WM_DELETE_WINDOW", self.close_window)
+		parent.wait_window(self.root)
+
+# Define MainWindow class
+class MainWindow:
 	hostname = "fe.deic.sdu.dk"
 	jpt_start = "/opt/sys/apps/jpt/jpt_start"
 	uid = None
@@ -366,5 +391,5 @@ class JupyterTool:
 
 # Create and launch the application
 root = tk.Tk()
-JupyterTool(root)
+MainWindow(root)
 root.mainloop()
