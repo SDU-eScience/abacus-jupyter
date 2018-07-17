@@ -160,8 +160,13 @@ class JupyterTool:
 			self.button_open.configure(state = tk.NORMAL)
 			self.root.update()
 		else:
-			self.add_log("Jupyter webserver is not responding, please wait")
-			self.root.after(5000, self.wait_webserver)
+			if not self.poll_jupyter():
+				self.add_log("Jupyter job unexpectedly stopped")
+				self.disconnect()
+				return
+			else:
+				self.add_log("Jupyter webserver is not responding, please wait")
+				self.root.after(5000, self.wait_webserver)
 
 	def open_tunnel(self):
 		self.port = str(10000 + self.uid)

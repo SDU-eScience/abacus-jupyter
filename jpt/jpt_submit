@@ -16,7 +16,6 @@ mkdir -p $XDG_RUNTIME_DIR
 mkdir -p $HOME/notebooks
 
 module load python/<version>
-module load jupyterlab
 
 if [ -f $MODULES ]; then
 	source $MODULES
