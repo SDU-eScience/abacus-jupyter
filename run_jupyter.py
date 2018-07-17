@@ -42,7 +42,6 @@ except ImportError:
 class UpdateWindow:
 	def close_window(self):
 		self.root.destroy()
-		self.parent.destroy()
 
 	def __init__(self, parent):
 		self.root = tk.Toplevel(parent)
@@ -54,11 +53,11 @@ class UpdateWindow:
 		self.root.transient(parent)
 		self.root.lift()
 
-		self.label_info = tk.Label(self.root, text = "A new version of the program is available.\nPlease visit escience.sdu.dk to download the newest version.")
+		self.label_info = tk.Label(self.root, text = "A new version of the program is available.\nPlease click the button below to update the program.\nAfter the program exits, please restart it manually.")
 		self.label_info.pack(padx = 10, pady = 10)
 
-		self.button_close = tk.Button(self.root, text = "Close", width = 6, command = self.close_window)
-		self.button_close.pack(pady = (0,15))
+		self.button_update = tk.Button(self.root, text = "Update", width = 6, command = self.close_window)
+		self.button_update.pack(pady = (0,15))
 
 		self.root.protocol("WM_DELETE_WINDOW", self.close_window)
 		parent.wait_window(self.root)
@@ -66,7 +65,8 @@ class UpdateWindow:
 # Define MainWindow class
 class MainWindow:
 	hostname = "fe.deic.sdu.dk"
-	jpt_start = "/opt/sys/apps/jpt/jpt_start"
+	jpt_root = "/opt/sys/apps/jpt/"
+	jpt_version = 1.0
 	uid = None
 	username = None
 	status = None
@@ -76,6 +76,24 @@ class MainWindow:
 	jpt_jobid = None
 	jpt_status = None
 	jpt_node = None
+
+	def update_program(self):
+		filename = os.path.realpath(__file__)
+		cmd = "cat " + self.jpt_root + "run_jupyter.py"
+		out, exitcode = self.ssh_command(cmd)
+		fp = open(filename, "w")
+		fp.write(out)
+		fp.close()
+		self.root.destroy()
+		sys.exit(0)
+
+	def check_version(self):
+		cmd = "cat " + self.jpt_root + "jpt_version"
+		out, exitcode = self.ssh_command(cmd)
+		out = float(out)
+		if out > self.jpt_version:
+			UpdateWindow(self.root)
+			self.update_program()
 
 	def save_settings(self):
 		config = ConfigParser()
@@ -247,6 +265,7 @@ class MainWindow:
 			return
 		else:
 			self.add_log("Successfully connected as: " + self.username + " (" + str(self.uid) + ")")
+			self.check_version()
 		if self.poll_jupyter():
 			self.add_log("Jupyter instance found with jobid " + self.jpt_jobid)
 		else:
@@ -272,7 +291,7 @@ class MainWindow:
 		if not self.validate_time():
 			return 0
 		tmlimit = self.entry_time.get()
-		cmd = self.jpt_start + " " + version + " " + jupyter + " " + account + " " + tmlimit
+		cmd = self.jpt_root + " ".join(["jpt_start", version, jupyter, account, tmlimit])
 		out, exitcode = self.ssh_command(cmd)
 		if "invalid" in out:
 			self.add_log("Cannot start Jupyter, invalid account: " + account)
