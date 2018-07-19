@@ -70,6 +70,7 @@ class MainWindow:
 	uid = None
 	username = None
 	status = None
+	blocking = None
 	tunnel = None
 	port = None
 	token = None
@@ -187,7 +188,7 @@ class MainWindow:
 
 	def poll_webserver(self):
 		try:
-			result = url.urlopen("http://localhost:8888").getcode()
+			result = url.urlopen("http://localhost:8448").getcode()
 		except:
 			return 0
 		if result == 200:
@@ -214,13 +215,13 @@ class MainWindow:
 	def open_tunnel(self):
 		self.port = str(10000 + self.uid)
 		address = self.username + "@" + self.hostname
-		forward = "8888:" + self.jpt_node + ":" + self.port
+		forward = "8448:" + self.jpt_node + ":" + self.port
 		keyfile = self.entry_sshkey.get().strip()
 		if not keyfile:
 			self.tunnel = Popen(["ssh", "-q", "-N", "-L", forward, address])
 		else:
 			self.tunnel = Popen(["ssh", "-q", "-i", keyfile, "-N", "-L", forward, address])
-		self.status = 1
+		self.status = True
 
 	def poll_tunnel(self):
 		if self.status == None:
@@ -258,10 +259,14 @@ class MainWindow:
 		self.root.after(5000, self.wait_tunnel)
 
 	def connect(self):
+		if self.blocking:
+			return
+		self.blocking = True
 		self.username = self.entry_username.get()
 		self.uid = self.get_uid()
 		if self.uid == 0:
 			self.add_log("Unable to connect as: " + self.username)
+			self.blocking = None
 			return
 		else:
 			self.add_log("Successfully connected as: " + self.username + " (" + str(self.uid) + ")")
@@ -271,7 +276,9 @@ class MainWindow:
 		else:
 			self.add_log("Jupyter instance was not found")
 			if not self.start_jupyter():
+				self.blocking = None
 				return
+		self.blocking = None
 		self.wait_tunnel()
 
 	def disconnect(self):
@@ -330,7 +337,7 @@ class MainWindow:
 			cmd = "cat ~/.jupyter/token"
 			out, exitcode = self.ssh_command(cmd)
 			self.token = out
-		url = "http://localhost:8888/?token=" + self.token
+		url = "http://localhost:8448/?token=" + self.token
 		self.add_log("URL address: " + url)
 		webbrowser.open_new_tab(url)
 
