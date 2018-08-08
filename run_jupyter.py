@@ -66,7 +66,7 @@ class UpdateWindow:
 class MainWindow:
 	hostname = "fe.deic.sdu.dk"
 	jpt_root = "/opt/sys/apps/jpt/"
-	jpt_version = 1.0
+	jpt_version = 1.1
 	uid = None
 	username = None
 	status = None
