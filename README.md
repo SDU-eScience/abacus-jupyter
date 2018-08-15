@@ -28,4 +28,4 @@ $ pip install --user numpy
 
 For the advanced users, it is possible to e.g. load additional modules and set environmental variables before Jupyter starts running. If the file "~/.jupyter/modules" exists, this file is source'd into the submit script before starting Jupyter. For example, if the user needs tensorflow, run the following command:
 
-echo "module load tensorflow" > ~/.jupyter/modules
+$ echo "module load tensorflow" > ~/.jupyter/modules
