@@ -130,7 +130,9 @@ class MainWindow:
 		self.entry_account.insert(0, value)
 		value = self.get_value(config, "timelimit", "06:00")
 		self.entry_time.insert(0, value)
-		value = self.get_value(config, "version", "Python 3.6")
+		value = self.get_value(config, "version", "")
+		if not value in self.array_version:
+			value = self.array_version[0];
 		self.string_version.set(value)
 
 	def add_log(self, text):
@@ -394,8 +396,9 @@ class MainWindow:
 
 		self.label_version = tk.Label(self.bframe, text = "Version")
 		self.label_version.grid(row = 0, column = 2, sticky = tk.W)
+		self.array_version = ["Python 3.6 (Jupyter Notebook)", "Python 3.6 (JupyterLab)", "Python 2.7 (Jupyter Notebook)", "Python 2.7 (JupyterLab)"]
 		self.string_version = tk.StringVar(self.bframe)
-		self.select_version = tk.OptionMenu(self.bframe, self.string_version, "Python 3.6 (Jupyter Notebook)", "Python 3.6 (JupyterLab)", "Python 2.7 (Jupyter Notebook)", "Python 2.7 (JupyterLab)")
+		self.select_version = tk.OptionMenu(self.bframe, self.string_version, *self.array_version)
 		self.select_version.configure(width = 20)
 		self.select_version.grid(row = 1, column = 2, sticky = tk.W)
 
