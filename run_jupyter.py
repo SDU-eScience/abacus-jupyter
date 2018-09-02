@@ -70,7 +70,6 @@ class MainWindow:
 	uid = None
 	username = None
 	status = None
-	blocking = None
 	tunnel = None
 	port = None
 	token = None
@@ -132,7 +131,7 @@ class MainWindow:
 		self.entry_time.insert(0, value)
 		value = self.get_value(config, "version", "")
 		if not value in self.array_version:
-			value = self.array_version[0];
+			value = self.array_version[0]
 		self.string_version.set(value)
 
 	def add_log(self, text):
@@ -144,10 +143,12 @@ class MainWindow:
 
 	def set_connect(self):
 		self.button_connect.configure(text = "Connect", command = self.connect)
+		self.button_connect.configure(state = tk.NORMAL)
 		self.root.update()
 
 	def set_disconnect(self):
 		self.button_connect.configure(text = "Disconnect", command = self.disconnect)
+		self.button_connect.configure(state = tk.NORMAL)
 		self.root.update()
 
 	def validate_time(self):
@@ -261,14 +262,17 @@ class MainWindow:
 		self.root.after(5000, self.wait_tunnel)
 
 	def connect(self):
-		if self.blocking:
+		self.button_connect.configure(state = tk.DISABLED)
+		self.root.update()
+		self.username = self.entry_username.get().strip()
+		if not self.username:
+			self.add_log("Unable to connect without a username")
+			self.set_connect()
 			return
-		self.blocking = True
-		self.username = self.entry_username.get()
 		self.uid = self.get_uid()
 		if self.uid == 0:
 			self.add_log("Unable to connect as: " + self.username)
-			self.blocking = None
+			self.set_connect()
 			return
 		else:
 			self.add_log("Successfully connected as: " + self.username + " (" + str(self.uid) + ")")
@@ -278,9 +282,9 @@ class MainWindow:
 		else:
 			self.add_log("Jupyter instance was not found")
 			if not self.start_jupyter():
-				self.blocking = None
+				self.set_connect()
 				return
-		self.blocking = None
+		self.set_connect()
 		self.wait_tunnel()
 
 	def disconnect(self):
@@ -353,7 +357,7 @@ class MainWindow:
 
 	def open_sshkey(self):
 		self.root.update()
-		filename = filedialog.askopenfilename(initialdir = "/", title = "Select private SSH key")
+		filename = filedialog.askopenfilename(initialdir = os.path.expanduser("~"), title = "Select private SSH key")
 		self.entry_sshkey.delete(0, tk.END)
 		self.entry_sshkey.insert(0, filename)
 
