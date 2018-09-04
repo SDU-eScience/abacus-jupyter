@@ -4,7 +4,7 @@
 import os
 import sys
 import webbrowser
-from subprocess import Popen, PIPE
+import subprocess
 
 try:
 	import Tkinter as tk
@@ -77,6 +77,17 @@ class MainWindow:
 	jpt_status = None
 	jpt_node = None
 
+	def check_ssh_exists(self):
+		if os.name == 'nt':
+			exitcode = subprocess.call(["where", "plink"], stdout = subprocess.PIPE)
+			client = "PuTTY"
+		else:
+			exitcode = subprocess.call(["which", "ssh"], stdout = subprocess.PIPE)
+			client = "OpenSSH"
+		if exitcode:
+			self.add_log("Unable to find a valid SSH client, please install " + client)
+			self.disable_connect()
+
 	def update_program(self):
 		filename = os.path.realpath(__file__)
 		cmd = "cat " + self.jpt_root + "run_jupyter.py"
@@ -141,6 +152,10 @@ class MainWindow:
 		self.text_info.see(tk.END)
 		self.root.update()
 
+	def disable_connect(self):
+		self.button_connect.configure(state = tk.DISABLED)
+		self.root.update()
+
 	def set_connect(self):
 		self.button_connect.configure(text = "Connect", command = self.connect)
 		self.button_connect.configure(state = tk.NORMAL)
@@ -175,9 +190,9 @@ class MainWindow:
 		address = self.username + "@" + self.hostname
 		keyfile = self.entry_sshkey.get().strip()
 		if not keyfile:
-			proc = Popen(["ssh", "-q", address, cmd], stdout=PIPE)
+			proc = subprocess.Popen(["ssh", "-q", address, cmd], stdout = subprocess.PIPE)
 		else:
-			proc = Popen(["ssh", "-q", "-i", keyfile, address, cmd], stdout=PIPE)
+			proc = subprocess.Popen(["ssh", "-q", "-i", keyfile, address, cmd], stdout = subprocess.PIPE)
 		out, err = proc.communicate()
 		out = out.decode().strip()
 		return out, proc.returncode
@@ -221,9 +236,9 @@ class MainWindow:
 		forward = "8448:" + self.jpt_node + ":" + self.port
 		keyfile = self.entry_sshkey.get().strip()
 		if not keyfile:
-			self.tunnel = Popen(["ssh", "-q", "-N", "-L", forward, address])
+			self.tunnel = subprocess.Popen(["ssh", "-q", "-N", "-L", forward, address])
 		else:
-			self.tunnel = Popen(["ssh", "-q", "-i", keyfile, "-N", "-L", forward, address])
+			self.tunnel = subprocess.Popen(["ssh", "-q", "-i", keyfile, "-N", "-L", forward, address])
 		self.status = True
 
 	def poll_tunnel(self):
@@ -262,8 +277,7 @@ class MainWindow:
 		self.root.after(5000, self.wait_tunnel)
 
 	def connect(self):
-		self.button_connect.configure(state = tk.DISABLED)
-		self.root.update()
+		self.disable_connect()
 		self.username = self.entry_username.get().strip()
 		if not self.username:
 			self.add_log("Unable to connect without a username")
@@ -421,6 +435,7 @@ class MainWindow:
 		self.button_open.grid(row = 6, column = 0, pady = (15,10), sticky = tk.W)
 
 		self.load_settings()
+		self.check_ssh_exists()
 
 # Create and launch the application
 root = tk.Tk()
