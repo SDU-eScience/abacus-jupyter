@@ -1,8 +1,13 @@
 # Jupyter on Abacus
-This Python program provides an automatic method for launching Jupyter jobs on the Abacus 2.0 supercomputer. At the moment, the program works on macOS or Linux, while Windows is completely unsupported. After launching the program on the user's local computer, it is possible to connect to the Abacus 2.0 supercomputer, after which the program automatically submits a new Jupyter job to the queue system. Once the Jupyter job is running, the Jupyter interface is accessible through the user's local browser.
+This Python program provides an automatic method for launching Jupyter jobs on the Abacus 2.0 supercomputer. The program works on all major operating systems, assuming Python and a supported SSH client is available. After launching the program on the user's local computer, it is possible to connect to the Abacus 2.0 supercomputer, after which the program automatically submits a new Jupyter job to the queue system. Once the Jupyter job is running, the Jupyter interface is accessible through the user's local browser.
 
 ## Requirements
-The program requires either macOS or Linux with a working Python installation that includes the python TK package.
+The program has been tested on macOS, Linux, and Windows. The requirements for running the program are listed below.
+
+* Python 2.7 or newer
+* Tkinter python package
+* OpenSSH for macOS and Linux
+* PuTTY for Windows
 
 ## Usage
 From the main window of the program, the user can specify the following settings.

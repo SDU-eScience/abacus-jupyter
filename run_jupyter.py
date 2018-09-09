@@ -5,6 +5,7 @@ import os
 import sys
 import webbrowser
 import subprocess
+import platform
 
 try:
 	import Tkinter as tk
@@ -96,7 +97,7 @@ class MainWindow:
 		fp.write(out)
 		fp.close()
 		self.root.destroy()
-		sys.exit(0)
+		sys.exit()
 
 	def check_version(self):
 		cmd = "cat " + self.jpt_root + "jpt_version"
@@ -189,11 +190,18 @@ class MainWindow:
 	def ssh_command(self, cmd):
 		address = self.username + "@" + self.hostname
 		keyfile = self.entry_sshkey.get().strip()
-		if not keyfile:
-			proc = subprocess.Popen(["ssh", "-q", address, cmd], stdout = subprocess.PIPE)
+		if os.name == 'nt':
+			cmdline = ["plink"]
+			flag = True
 		else:
-			proc = subprocess.Popen(["ssh", "-q", "-i", keyfile, address, cmd], stdout = subprocess.PIPE)
-		out, err = proc.communicate()
+			cmdline = ["ssh", "-q"]
+			flag = False
+		if not keyfile:
+			cmdline.extend([address, cmd])
+		else:
+			cmdline.extend(["-i", keyfile, address, cmd])
+		proc = subprocess.Popen(cmdline, stdout = subprocess.PIPE, stdin = subprocess.PIPE, shell = flag)
+		out, err = proc.communicate(b"y\n")
 		out = out.decode().strip()
 		return out, proc.returncode
 
@@ -235,10 +243,17 @@ class MainWindow:
 		address = self.username + "@" + self.hostname
 		forward = "8448:" + self.jpt_node + ":" + self.port
 		keyfile = self.entry_sshkey.get().strip()
-		if not keyfile:
-			self.tunnel = subprocess.Popen(["ssh", "-q", "-N", "-L", forward, address])
+		if os.name == 'nt':
+			cmdline = ["plink"]
+			flag = True
 		else:
-			self.tunnel = subprocess.Popen(["ssh", "-q", "-i", keyfile, "-N", "-L", forward, address])
+			cmdline = ["ssh", "-q"]
+			flag = False
+		if not keyfile:
+			cmdline.extend(["-N", "-L", forward, address])
+		else:
+			cmdline.extend(["-i", keyfile, "-N", "-L", forward, address])
+		self.tunnel = subprocess.Popen(cmdline, shell = flag)
 		self.status = True
 
 	def poll_tunnel(self):
@@ -433,6 +448,15 @@ class MainWindow:
 
 		self.button_open = tk.Button(self.frame, text = "Open Jupyter in browser", command = self.open_jupyter, state = tk.DISABLED)
 		self.button_open.grid(row = 6, column = 0, pady = (15,10), sticky = tk.W)
+
+		if platform.system() == 'Windows':
+			self.select_version.configure(width = 30)
+			self.entry_sshkey.configure(width = 54)
+			self.text_info.configure(width = 60)
+
+		if platform.system() == 'Linux':
+			self.select_version.configure(width = 25)
+			self.entry_sshkey.configure(width = 46)
 
 		self.load_settings()
 		self.check_ssh_exists()
