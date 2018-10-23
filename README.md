@@ -23,8 +23,8 @@ In most cases, only the username is mandatory, while the remaining settings can 
 ## Technical details
 Depending on the chosen version of Python, on the Abacus 2.0 supercomputer one of the following two modules are loaded.
 
-$ module load python/2.7.14 \
-$ module load python/3.6.3
+$ python/2.7.14 \
+$ python/3.6.3
 
 If the user requires additional Python packages, the correct module should be loaded, after which the packages can be installed using pip. For example, if the user uses Python 3.6 and needs numpy, use SSH to access the Abacus 2.0 supercomputer and run the following two commands.
 
